@@ -66,10 +66,13 @@ Run the provided batch file to launch a dedicated Chrome instance with remote de
    Price, Order ID, etc.).
 6. Output: Copies the final string to the system clipboard using pyperclip for a seamless "One-Click" export experience.
 
+Data source Example
 ![img01: Data source Example](./img/example01.png?raw=true)
 
+Compiler Run Example
 ![img02: Compiler Run Example](./img/example02.png?raw=true)
 
+Scraped Output Example
 ![img03: Scraped Output Example](./img/example03.png?raw=true)
 
 ---

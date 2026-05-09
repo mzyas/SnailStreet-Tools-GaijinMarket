@@ -242,9 +242,3 @@ cython_debug/
 #.idea/
 
 /ChromeGaijinMarketData/
-.idea/misc.xml
-.idea/modules.xml
-.idea/SnailStreet-Tools-GaijinMarket.iml
-.idea/vcs.xml
-.idea/inspectionProfiles/profiles_settings.xml
-.idea/.gitignore

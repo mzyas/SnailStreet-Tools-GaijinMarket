@@ -1,0 +1,21 @@
+{
+  "prompt": {
+    "lang_name": "中文",
+    "detected_lang": "检测到网站语言: %s",
+    "connected_page": "已连接到页面: %s",
+    "fetching_data": "正在获取数据...",
+    "enter_date": "请输入起始日期 (YYYY/M/D) [默认 %s]: ",
+    "fetch_success": "抓取成功！共找到 %d 条记录。",
+    "data_copied": "数据已复制到剪贴板。",
+    "no_records": "未找到匹配的记录。",
+    "error_page_not_found": "错误：未找到交易历史页面！请先手动打开。",
+    "error_connecting": "运行异常"
+  },
+  "parser": {
+    "purchase_completed": "购买完成",
+    "sale_completed": "销售完成",
+    "type_vehicle": "载具",
+    "type_camouflage": "涂装",
+    "type_other": "其它"
+  }
+}

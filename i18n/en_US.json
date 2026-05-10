@@ -1,0 +1,21 @@
+{
+  "prompt": {
+    "lang_name": "English",
+    "detected_lang": "Detected site language: %s",
+    "connected_page": "Connected to page: %s",
+    "fetching_data": "Fetching data...",
+    "enter_date": "Please enter start date (YYYY/M/D) [Default %s]: ",
+    "fetch_success": "Fetch successful! Found %d records.",
+    "data_copied": "Data successfully copied to clipboard.",
+    "no_records": "No records found matching the criteria.",
+    "error_page_not_found": "Error: Trading history page not found! Please open it manually first.",
+    "error_connecting": "Exception"
+  },
+  "parser": {
+    "purchase_completed": "Purchase completed",
+    "sale_completed": "Sale completed",
+    "type_vehicle": "Vehicle",
+    "type_camouflage": "Camouflage",
+    "type_other": "Other"
+  }
+}

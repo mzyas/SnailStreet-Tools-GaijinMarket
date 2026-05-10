@@ -1,16 +1,22 @@
 # parser.py
+import os
 import re
 from datetime import datetime
 from itemName import NATIONS, OTHER_ITEMS
+from i18n import LanguageManager
+
+_LM = LanguageManager("zh_CN")
 
 
-def parse_message_node(msg_node):
+def parse_message_node(msg_node, lm=None):
+    if lm is None:
+        lm = _LM
     # 1.Raw text fetching
     # 1.原文テキストの抽出
     # 1.基础文本获取
     full_text = msg_node.inner_text()
-    is_buy = "Purchase completed" in full_text # "购买完成"
-    is_sell = "Sale completed" in full_text # "销售完成"
+    is_buy = lm.t("parser.purchase_completed") in full_text
+    is_sell = lm.t("parser.sale_completed") in full_text
 
     if not is_buy and not is_sell:
         return None
@@ -45,16 +51,16 @@ def parse_message_node(msg_node):
     # 移除特殊字符进行类型匹配
     clean_name = re.sub('[^\u4e00-\u9fa5a-zA-Z0-9()（）]', '', original_name)
 
-    item_type = "Camouflage" # "涂装"
+    item_type = lm.t("parser.type_camouflage")
     # Check for "Other" type
     # 「その他」の判定
     # 判断是否为“其它”
-    if any(re.sub('[^\u4e00-\u9fa5a-zA-Z0-9]', '', item) in clean_name for item in OTHER_ITEMS):
-        item_type = "other" # "其它"
+    if any(re.sub('[^\u4e00-\u9fa5a-zA-Z0-9()（）]', '', item) in clean_name for item in OTHER_ITEMS):
+        item_type = lm.t("parser.type_other")
     else:
         has_bracket = bool(re.search(r'[(（].*?[)）]', clean_name))
         if has_bracket and any(nation in clean_name for nation in NATIONS):
-            item_type = "Vehicle" # "载具"
+            item_type = lm.t("parser.type_vehicle")
 
     # 4.Price and Quantity
     # 4.価格と数量

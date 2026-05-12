@@ -6,11 +6,13 @@
 from playwright.sync_api import sync_playwright
 from datetime import datetime
 from i18n import LanguageManager
+from version import VERSION
 from core import connect_browser, detect_language, fetch_records, format_tsv, copy_to_clipboard, get_default_date_range
 import itemName
 
 
 def run():
+    print(f"Gaijin Trade Automator v{VERSION}")
     """
     CLI mode: connect to Chrome, detect language, input date,
     fetch records and copy TSV to clipboard.

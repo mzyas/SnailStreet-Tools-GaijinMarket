@@ -77,21 +77,112 @@ Scraped Output Example
 
 ---
 
-## 🛠️ Tech Stack
-
-- Language: Python 3.x
-- Automation: [Playwright](https://playwright.dev/python/) (Sync API)
-- Data Processing: Regex (re), datetime, csv
-- Workflow: AI-Assisted Development & Manual Architecture Design
-
----
-
 ## 📂 Project Structure
 
 ```text
-├── main.py          # Entry point: Handles browser connection & CLI logic
-├── parser.py        # Core Logic: DOM parsing and data normalization
-├── itemName.py      # Configuration: Nation list and external item database
-└── Item_Name/       # External CSV assets for item categorization
+├── main.py              # CLI entry point
+├── gui.py               # Tkinter GUI  (zero extra dependency)
+├── core.py              # Shared browser / fetch / export logic
+├── parser.py            # DOM parsing and data normalization
+├── itemName.py          # Nation list + external item database (language-aware)
+├── version.py           # Single source of truth for version number
+├── i18n/                # JSON-based multilingual translation files
+│   ├── __init__.py      #   LanguageManager singleton
+│   ├── zh_CN.json       #   中文 (Chinese)
+│   └── en_US.json       #   English
+├── Item_Name/           # External CSV assets for item categorization
+│   ├── Decoration_zh.csv
+│   └── Decoration_eng.csv
+├── start_chrome.bat     # Launch Chrome with remote debugging (port 9222)
+├── requirements.txt     # Python dependencies
+└── Purchase_Sales_Records/
+    └── GaiJinMarket.xlsx  # Excel template with auto-tax formulas
 
 ```
+
+---
+
+## 🔧 Installation
+
+```bash
+# 1. Install Python dependencies
+pip install -r requirements.txt
+
+# 2. Install Playwright browser (required for browser automation)
+playwright install chromium
+```
+
+---
+
+## 🖥️ GUI Mode (Recommended)
+
+```bash
+python gui.py
+```
+
+| Feature | Description |
+|---------|-------------|
+| 🌐 **Language Switch** | Click "中文" / "EN" to toggle UI + item database language |
+| 🚀 **Launch Chrome** | Starts `start_chrome.bat` from within the app |
+| 📅 **Date Range** | GUI date input with auto-calculated end date |
+| 📋 **Copy TSV** | One-click clipboard export |
+| 💾 **Export CSV** | Save to `.csv` file with headers + OrderID |
+
+All messages are logged in the bottom panel with timestamps.
+
+---
+
+## 🌍 Multilingual Architecture
+
+```
+                    ┌──────────────────────────┐
+                    │   i18n/LanguageManager    │
+                    │   (Singleton, key-based)  │
+                    └──────────┬───────────────┘
+                               │  lm.t("group.key")
+               ┌───────────────┼───────────────┐
+               ▼               ▼               ▼
+        ┌──────────┐   ┌──────────┐   ┌──────────┐
+        │ zh_CN.json│   │ en_US.json│   │ (future) │
+        │  prompt   │   │  prompt   │   │  ja_JP   │
+        │  parser   │   │  parser   │   │  ...     │
+        │  gui      │   │  gui      │   │          │
+        └──────────┘   └──────────┘   └──────────┘
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │    itemName.py       │
+                    │  NATIONS  (per lang) │
+                    │  OTHER_ITEMS (CSV)   │
+                    │  reload_lang()       │
+                    └──────────────────────┘
+```
+
+1. `detect_language()` reads page title ("通知" / "Notifications") to detect language
+2. `itemName.reload_lang()` loads matching `Decoration_*.csv` + nation list
+3. `lm.t("parser.xxx")` returns buy/sell keywords in the correct language
+4. GUI calls `reload_language()` to refresh all widget texts on the fly
+
+---
+
+## 🛠️ Tech Stack
+
+- **Language**: Python 3.9+
+- **Browser Automation**: [Playwright](https://playwright.dev/python/) (Sync API)
+- **GUI**: Tkinter (Python standard library – zero extra dependency)
+- **i18n**: JSON-based key-value translations with fallback
+- **Data Processing**: Regex (`re`), `datetime`, `csv`
+- **Clipboard**: `pyperclip`
+- **Packaging**: PyInstaller (optional, for `.exe`)
+
+---
+
+## 📝 Changelog
+
+### v1.0.0 (2026-05-12)
+- Initial release
+- CLI mode (`main.py`) with date filtering, TSV clipboard output
+- GUI mode (`gui.py`) with TreeView, CSV export, log panel
+- Multilingual support: zh_CN / en_US (auto-detect + manual switch)
+- Chrome CDP connection (port 9222) via `start_chrome.bat`
+- `requirements.txt` + `version.py` for dependency tracking

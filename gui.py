@@ -18,6 +18,7 @@ from datetime import datetime
 from playwright.sync_api import sync_playwright
 
 from i18n import LanguageManager
+from version import VERSION
 import itemName
 from core import (
     connect_browser,
@@ -133,14 +134,14 @@ class GaijinMarketGUI:
             "msg_exported": self._lm.t("gui.msg_exported", "Exported to %s"),
             "msg_error": self._lm.t("gui.msg_error", "Error"),
         }
-        self.root.title(self._tm("title"))
+        self.root.title(f"{self._tm("title")} v{VERSION}")
 
     def _tm(self, key: str, *args):
         return self._t(key, *args)
 
     def _refresh_ui_texts(self):
         """Refresh all UI text elements after language change."""
-        self.root.title(self._tm("title"))
+        self.root.title(f"{self._tm("title")} v{VERSION}")
         self._lbl_chrome_frame.config(text=self._tm("chrome_status"))
         self._update_chrome_status(force=True)
         self._lbl_date_frame.config(text=self._tm("date_section"))

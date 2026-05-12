@@ -13,6 +13,7 @@ from tkinter import ttk, messagebox
 import threading
 import queue
 import os
+import subprocess
 from datetime import datetime
 
 from playwright.sync_api import sync_playwright
@@ -90,6 +91,7 @@ class GaijinMarketGUI:
             "chrome_status": self._lm.t("gui.chrome_status", "Chrome Status"),
             "connected": self._lm.t("gui.connected", "Connected"),
             "disconnected": self._lm.t("gui.disconnected", "Disconnected"),
+            "pending_detect": self._lm.t("gui.pending_detect", "Pending"),
             "checking": self._lm.t("gui.checking", "Checking..."),
             "page": self._lm.t("gui.page", "Page"),
             "lang_label": self._lm.t("gui.lang_label", "Site Language"),
@@ -100,6 +102,7 @@ class GaijinMarketGUI:
             "end_date": self._lm.t("gui.end_date", "End Date (auto)"),
 
             # --- Action buttons ---
+            "btn_launch_chrome": self._lm.t("gui.btn_launch_chrome", "Launch Chrome"),
             "btn_fetch": self._lm.t("gui.btn_fetch", "Start Fetch"),
             "btn_stop": self._lm.t("gui.btn_stop", "Stop"),
             "btn_copy": self._lm.t("gui.btn_copy", "Copy TSV"),
@@ -143,6 +146,7 @@ class GaijinMarketGUI:
         self._lbl_date_frame.config(text=self._tm("date_section"))
         self._lbl_start.config(text=self._tm("start_date") + ":")
         self._lbl_end.config(text=self._tm("end_date") + ":")
+        self._btn_launch.config(text=self._tm("btn_launch_chrome"))
         self._btn_fetch.config(text=self._tm("btn_fetch"))
         self._btn_copy.config(text=self._tm("btn_copy"))
         self._btn_export.config(text=self._tm("btn_export"))
@@ -153,9 +157,12 @@ class GaijinMarketGUI:
         self._rebuild_tree_columns()
 
     def _update_chrome_status(self, force=False):
-        connected = self._chrome_connected
-        text = self._tm("connected") if connected else self._tm("disconnected")
-        color = "green" if connected else "red"
+        if self._chrome_connected:
+            text, color = self._tm("connected"), "green"
+        elif self._is_fetching:
+            text, color = self._tm("checking"), "orange"
+        else:
+            text, color = self._tm("pending_detect"), "gray"
         self._lbl_chrome_status.config(text=text, foreground=color)
 
     # ==================================================================
@@ -164,17 +171,21 @@ class GaijinMarketGUI:
     # UI 构建
     # ==================================================================
     def _build_ui(self):
-        # ---- Top bar: language switch ----
+        # ---- Top bar: launch chrome + language switch ----
         top_bar = ttk.Frame(self.root)
         top_bar.pack(fill=tk.X, padx=10, pady=(10, 0))
 
+        self._btn_launch = ttk.Button(top_bar, text=self._tm("btn_launch_chrome"),
+                                      command=self._on_launch_chrome)
+        self._btn_launch.pack(side=tk.LEFT, padx=(0, 15))
+
         ttk.Label(top_bar, text="🌐").pack(side=tk.LEFT, padx=(0, 5))
         self._btn_zh = ttk.Button(top_bar, text="中文", width=6,
-                                  command=lambda: self._on_lang_switch("zh_CN"))
+                                   command=lambda: self._on_lang_switch("zh_CN"))
         self._btn_zh.pack(side=tk.LEFT, padx=2)
 
         self._btn_en = ttk.Button(top_bar, text="EN", width=6,
-                                  command=lambda: self._on_lang_switch("en_US"))
+                                   command=lambda: self._on_lang_switch("en_US"))
         self._btn_en.pack(side=tk.LEFT, padx=2)
 
         # ---- Chrome status section ----
@@ -185,8 +196,8 @@ class GaijinMarketGUI:
         chrome_inner = ttk.Frame(self._lbl_chrome_frame)
         chrome_inner.pack(fill=tk.X)
 
-        self._lbl_chrome_status = ttk.Label(chrome_inner, text=self._tm("disconnected"),
-                                            foreground="red", font=("", 10, "bold"))
+        self._lbl_chrome_status = ttk.Label(chrome_inner, text=self._tm("pending_detect"),
+                                            foreground="gray", font=("", 10, "bold"))
         self._lbl_chrome_status.pack(side=tk.LEFT, padx=(0, 20))
 
         ttk.Label(chrome_inner, text=f"{self._tm('page')}:").pack(side=tk.LEFT)
@@ -228,7 +239,7 @@ class GaijinMarketGUI:
 
         self._btn_fetch = ttk.Button(date_inner, text=self._tm("btn_fetch"),
                                      command=self._on_fetch)
-        self._btn_fetch.pack(side=tk.LEFT, padx=(0, 5))
+        self._btn_fetch.pack(side=tk.LEFT, padx=(10, 5))
 
         self._progress = ttk.Progressbar(date_inner, mode="indeterminate", length=180)
         self._progress.pack(side=tk.LEFT, padx=(5, 0))
@@ -268,21 +279,21 @@ class GaijinMarketGUI:
         self._tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        # ---- Action buttons ----
+        # ---- Action buttons (vertical) ----
         btn_frame = ttk.Frame(self._lbl_results_frame)
         btn_frame.pack(fill=tk.X, pady=(5, 0))
 
         self._btn_copy = ttk.Button(btn_frame, text=self._tm("btn_copy"),
                                     command=self._on_copy)
-        self._btn_copy.pack(side=tk.LEFT, padx=(0, 5))
+        self._btn_copy.pack(side=tk.TOP, fill=tk.X, pady=(0, 3))
 
         self._btn_export = ttk.Button(btn_frame, text=self._tm("btn_export"),
                                       command=self._on_export)
-        self._btn_export.pack(side=tk.LEFT, padx=(0, 5))
+        self._btn_export.pack(side=tk.TOP, fill=tk.X, pady=(0, 3))
 
         self._btn_clear = ttk.Button(btn_frame, text=self._tm("btn_clear"),
                                      command=self._on_clear)
-        self._btn_clear.pack(side=tk.LEFT)
+        self._btn_clear.pack(side=tk.TOP, fill=tk.X)
 
         # ---- Log section ----
         self._lbl_log_frame = ttk.LabelFrame(self.root, text=self._tm("log"), padding=10)
@@ -335,6 +346,25 @@ class GaijinMarketGUI:
     def _log_poll(self, message: str):
         """Thread-safe log from worker thread.  worker スレッドからの安全なログ。"""
         self.root.after(0, self._log, message)
+
+    # ==================================================================
+    # Launch Chrome
+    # Chrome の起動
+    # 启动 Chrome
+    # ==================================================================
+    def _on_launch_chrome(self):
+        """Launch start_chrome.bat in the project root."""
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        bat_path = os.path.join(script_dir, "start_chrome.bat")
+        if not os.path.exists(bat_path):
+            messagebox.showerror(self._tm("msg_error"),
+                                 f"start_chrome.bat not found at:\n{bat_path}")
+            return
+        try:
+            subprocess.Popen(bat_path, cwd=script_dir, shell=True)
+            self._log("Launching Chrome...  /  Chrome を起動中...  /  正在启动 Chrome...")
+        except Exception as e:
+            messagebox.showerror(self._tm("msg_error"), str(e))
 
     # ==================================================================
     # Language switch

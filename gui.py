@@ -110,15 +110,22 @@ class GaijinMarketGUI:
             "btn_export": self._lm.t("gui.btn_export", "Export CSV"),
             "btn_clear": self._lm.t("gui.btn_clear", "Clear Results"),
 
-            # --- Results ---
+            # --- Results column headers ---
             "results": self._lm.t("gui.results", "Results"),
-            "col_index": self._lm.t("gui.col_index", "#"),
             "col_type": self._lm.t("gui.col_type", "Type"),
-            "col_name": self._lm.t("gui.col_name", "Name"),
+            "col_name": self._lm.t("gui.col_name", "Item Name"),
             "col_date": self._lm.t("gui.col_date", "Date"),
-            "col_action": self._lm.t("gui.col_action", "Buy/Sell"),
-            "col_price": self._lm.t("gui.col_price", "Price"),
-            "col_qty": self._lm.t("gui.col_qty", "Qty"),
+            "col_purch_price": self._lm.t("gui.col_purch_price", "Purch. Price"),
+            "col_purch_qty": self._lm.t("gui.col_purch_qty", "Purch. Qty"),
+            "col_purch_total": self._lm.t("gui.col_purch_total", "Total Purch."),
+            "col_sale_price": self._lm.t("gui.col_sale_price", "Sale Price"),
+            "col_sale_qty": self._lm.t("gui.col_sale_qty", "Sale Qty"),
+            "col_sale_total": self._lm.t("gui.col_sale_total", "Total Sales"),
+            "col_net": self._lm.t("gui.col_net", "Net Received"),
+            "col_backup": self._lm.t("gui.col_backup", "Static Backup"),
+            "col_note1": self._lm.t("gui.col_note1", "Note 1"),
+            "col_note2": self._lm.t("gui.col_note2", "Note 2"),
+            "col_oid": self._lm.t("gui.col_oid", "Order No."),
 
             # --- Log section ---
             "log": self._lm.t("gui.log", "Log"),
@@ -250,28 +257,63 @@ class GaijinMarketGUI:
                                                  padding=10)
         self._lbl_results_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=(5, 0))
 
+        # ---- Action buttons (horizontal, above results count) ----
+        btn_frame = ttk.Frame(self._lbl_results_frame)
+        btn_frame.pack(anchor=tk.W, pady=(0, 5))
+
+        self._btn_copy = ttk.Button(btn_frame, text=self._tm("btn_copy"),
+                                    command=self._on_copy)
+        self._btn_copy.pack(side=tk.LEFT, padx=(0, 8))
+
+        self._btn_export = ttk.Button(btn_frame, text=self._tm("btn_export"),
+                                      command=self._on_export)
+        self._btn_export.pack(side=tk.LEFT, padx=(0, 8))
+
+        self._btn_clear = ttk.Button(btn_frame, text=self._tm("btn_clear"),
+                                     command=self._on_clear)
+        self._btn_clear.pack(side=tk.LEFT)
+
         self._lbl_results_count = ttk.Label(self._lbl_results_frame, text="", foreground="gray")
         self._lbl_results_count.pack(anchor=tk.W)
 
-        # TreeView
-        columns = ("index", "type", "name", "date", "action", "price", "qty")
+        # TreeView — 14 columns matching TSV/Excel format
+        # TreeView — TSV/Excel フォーマットに対応する 14 列
+        # TreeView — 14 列对齐 TSV/Excel 格式
+        columns = ("type", "name", "date",
+                   "bP", "bQ", "purch_total",
+                   "sP", "sQ", "sale_total",
+                   "net", "backup", "note1", "note2", "oid")
         self._tree = ttk.Treeview(self._lbl_results_frame, columns=columns, show="headings",
                                   height=10)
-        self._tree.heading("index", text=self._tm("col_index"))
         self._tree.heading("type", text=self._tm("col_type"))
         self._tree.heading("name", text=self._tm("col_name"))
         self._tree.heading("date", text=self._tm("col_date"))
-        self._tree.heading("action", text=self._tm("col_action"))
-        self._tree.heading("price", text=self._tm("col_price"))
-        self._tree.heading("qty", text=self._tm("col_qty"))
+        self._tree.heading("bP", text=self._tm("col_purch_price"))
+        self._tree.heading("bQ", text=self._tm("col_purch_qty"))
+        self._tree.heading("purch_total", text=self._tm("col_purch_total"))
+        self._tree.heading("sP", text=self._tm("col_sale_price"))
+        self._tree.heading("sQ", text=self._tm("col_sale_qty"))
+        self._tree.heading("sale_total", text=self._tm("col_sale_total"))
+        self._tree.heading("net", text=self._tm("col_net"))
+        self._tree.heading("backup", text=self._tm("col_backup"))
+        self._tree.heading("note1", text=self._tm("col_note1"))
+        self._tree.heading("note2", text=self._tm("col_note2"))
+        self._tree.heading("oid", text=self._tm("col_oid"))
 
-        self._tree.column("index", width=40, anchor=tk.CENTER)
-        self._tree.column("type", width=80)
-        self._tree.column("name", width=240)
-        self._tree.column("date", width=100, anchor=tk.CENTER)
-        self._tree.column("action", width=80, anchor=tk.CENTER)
-        self._tree.column("price", width=100, anchor=tk.E)
-        self._tree.column("qty", width=60, anchor=tk.CENTER)
+        self._tree.column("type", width=70)
+        self._tree.column("name", width=220)
+        self._tree.column("date", width=90, anchor=tk.CENTER)
+        self._tree.column("bP", width=80, anchor=tk.E)
+        self._tree.column("bQ", width=60, anchor=tk.CENTER)
+        self._tree.column("purch_total", width=80, anchor=tk.E)
+        self._tree.column("sP", width=80, anchor=tk.E)
+        self._tree.column("sQ", width=60, anchor=tk.CENTER)
+        self._tree.column("sale_total", width=80, anchor=tk.E)
+        self._tree.column("net", width=90, anchor=tk.E)
+        self._tree.column("backup", width=90, anchor=tk.E)
+        self._tree.column("note1", width=70)
+        self._tree.column("note2", width=70)
+        self._tree.column("oid", width=110)
 
         scrollbar = ttk.Scrollbar(self._lbl_results_frame, orient=tk.VERTICAL,
                                   command=self._tree.yview)
@@ -279,22 +321,6 @@ class GaijinMarketGUI:
 
         self._tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-
-        # ---- Action buttons (vertical) ----
-        btn_frame = ttk.Frame(self._lbl_results_frame)
-        btn_frame.pack(fill=tk.X, pady=(5, 0))
-
-        self._btn_copy = ttk.Button(btn_frame, text=self._tm("btn_copy"),
-                                    command=self._on_copy)
-        self._btn_copy.pack(side=tk.TOP, fill=tk.X, pady=(0, 3))
-
-        self._btn_export = ttk.Button(btn_frame, text=self._tm("btn_export"),
-                                      command=self._on_export)
-        self._btn_export.pack(side=tk.TOP, fill=tk.X, pady=(0, 3))
-
-        self._btn_clear = ttk.Button(btn_frame, text=self._tm("btn_clear"),
-                                     command=self._on_clear)
-        self._btn_clear.pack(side=tk.TOP, fill=tk.X)
 
         # ---- Log section ----
         self._lbl_log_frame = ttk.LabelFrame(self.root, text=self._tm("log"), padding=10)
@@ -310,14 +336,23 @@ class GaijinMarketGUI:
         log_scroll.pack(side=tk.RIGHT, fill=tk.Y)
 
     def _rebuild_tree_columns(self):
-        """Re-set tree headings after language switch."""
-        self._tree.heading("index", text=self._tm("col_index"))
+        """Re-set tree headings after language switch.
+        言語切替後に TreeView の見出しを再設定します。
+        语言切换后重新设置 TreeView 列标题。"""
         self._tree.heading("type", text=self._tm("col_type"))
         self._tree.heading("name", text=self._tm("col_name"))
         self._tree.heading("date", text=self._tm("col_date"))
-        self._tree.heading("action", text=self._tm("col_action"))
-        self._tree.heading("price", text=self._tm("col_price"))
-        self._tree.heading("qty", text=self._tm("col_qty"))
+        self._tree.heading("bP", text=self._tm("col_purch_price"))
+        self._tree.heading("bQ", text=self._tm("col_purch_qty"))
+        self._tree.heading("purch_total", text=self._tm("col_purch_total"))
+        self._tree.heading("sP", text=self._tm("col_sale_price"))
+        self._tree.heading("sQ", text=self._tm("col_sale_qty"))
+        self._tree.heading("sale_total", text=self._tm("col_sale_total"))
+        self._tree.heading("net", text=self._tm("col_net"))
+        self._tree.heading("backup", text=self._tm("col_backup"))
+        self._tree.heading("note1", text=self._tm("col_note1"))
+        self._tree.heading("note2", text=self._tm("col_note2"))
+        self._tree.heading("oid", text=self._tm("col_oid"))
 
     def _update_end_date_display(self):
         _, end_dt, _ = get_default_date_range()
@@ -517,34 +552,37 @@ class GaijinMarketGUI:
     # TreeView 数据填充
     # ==================================================================
     def _populate_tree(self):
-        """Fill TreeView from self._records."""
+        """Fill TreeView from self._records with full 14-column TSV layout.
+        self._records から 14 列の TSV レイアウトで TreeView を埋めます。
+        使用完整 14 列 TSV 布局填充 TreeView。"""
         for row in self._tree.get_children():
             self._tree.delete(row)
 
-        for i, rec in enumerate(self._records):
-            # Determine action (Buy / Sell)
-            if rec['bP'] != "0" and float(rec['bP']) > 0:
-                action = "Buy"
-                price = rec['bP']
-                qty = rec['bQ']
-            else:
-                action = "Sell"
-                price = rec['sP']
-                qty = rec['sQ']
-
+        for rec in self._records:
             # Truncate name if too long
             name = rec['name']
             if len(name) > 40:
                 name = name[:38] + "…"
 
+            # 14 columns: type, name, date, bP, bQ, purch_total,
+            #             sP, sQ, sale_total, net, backup, note1, note2, oid
+            # Calculated cells (purch_total, sale_total, net) left empty —
+            # user fills them via Excel formulas after pasting.
             self._tree.insert("", tk.END, values=(
-                i + 1,
                 rec['type'],
                 name,
                 rec['dateOnly'],
-                action,
-                price,
-                qty,
+                rec['bP'],
+                rec['bQ'],
+                "",            # purch_total — left for Excel formula
+                rec['sP'],
+                rec['sQ'],
+                "",            # sale_total  — left for Excel formula
+                "",            # net         — left for Excel formula
+                "",            # backup
+                "",            # note1
+                "",            # note2
+                rec['oid'],
             ))
 
         self._update_results_label()
@@ -577,18 +615,43 @@ class GaijinMarketGUI:
 
         import csv
         try:
+            # CSV header translation (i18n-keyed, same as tree headings)
+            # CSV ヘッダー翻訳 (i18n キー、ツリー見出しと同じ)
+            # CSV 表头翻译 (i18n key, 与 tree 列标题一致)
+            header = [
+                self._tm("col_type"),
+                self._tm("col_name"),
+                self._tm("col_date"),
+                self._tm("col_purch_price"),
+                self._tm("col_purch_qty"),
+                self._tm("col_purch_total"),
+                self._tm("col_sale_price"),
+                self._tm("col_sale_qty"),
+                self._tm("col_sale_total"),
+                self._tm("col_net"),
+                self._tm("col_backup"),
+                self._tm("col_note1"),
+                self._tm("col_note2"),
+                self._tm("col_oid"),
+            ]
             with open(filepath, "w", encoding="utf-8-sig", newline="") as f:
                 writer = csv.writer(f)
-                writer.writerow(["Index", "Type", "Name", "Date", "Action", "Price", "Qty", "OrderID"])
-                for i, rec in enumerate(self._records):
+                writer.writerow(header)
+                for rec in self._records:
                     writer.writerow([
-                        i + 1,
                         rec['type'],
                         rec['name'],
                         rec['dateOnly'],
-                        "Buy" if (rec['bP'] != "0" and float(rec['bP']) > 0) else "Sell",
-                        rec['bP'] if (rec['bP'] != "0" and float(rec['bP']) > 0) else rec['sP'],
-                        rec['bQ'] if (rec['bP'] != "0" and float(rec['bP']) > 0) else rec['sQ'],
+                        rec['bP'],
+                        rec['bQ'],
+                        "",          # purch_total — Excel formula
+                        rec['sP'],
+                        rec['sQ'],
+                        "",          # sale_total  — Excel formula
+                        "",          # net         — Excel formula
+                        "",          # backup
+                        "",          # note1
+                        "",          # note2
                         rec['oid'],
                     ])
             self._log(self._tm("msg_exported") % filepath)

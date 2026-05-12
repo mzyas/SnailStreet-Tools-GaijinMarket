@@ -15,8 +15,6 @@ import subprocess
 import shutil
 from datetime import datetime, timedelta
 from parser import parse_message_node
-from i18n import LanguageManager
-import itemName
 
 
 def connect_browser(playwright_instance):

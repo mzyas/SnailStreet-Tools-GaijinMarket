@@ -1,16 +1,21 @@
 # parser.py
-import os
 import re
 from datetime import datetime
-from itemName import NATIONS, OTHER_ITEMS
+import itemName
 from i18n import LanguageManager
 
 _LM = LanguageManager("zh_CN")
+_LAST_LANG = _LM.lang  # Track language for dynamic reloading
 
 
 def parse_message_node(msg_node, lm=None):
+    global _LAST_LANG
     if lm is None:
         lm = _LM
+    # Dynamically reload NATIONS / OTHER_ITEMS when language changes
+    if lm.lang != _LAST_LANG:
+        itemName.reload_lang(lm.lang)
+        _LAST_LANG = lm.lang
     # 1.Raw text fetching
     # 1.原文テキストの抽出
     # 1.基础文本获取
@@ -55,11 +60,11 @@ def parse_message_node(msg_node, lm=None):
     # Check for "Other" type
     # 「その他」の判定
     # 判断是否为“其它”
-    if any(re.sub('[^\u4e00-\u9fa5a-zA-Z0-9()（）]', '', item) in clean_name for item in OTHER_ITEMS):
+    if any(re.sub('[^\u4e00-\u9fa5a-zA-Z0-9()（）]', '', item) in clean_name for item in itemName.OTHER_ITEMS):
         item_type = lm.t("parser.type_other")
     else:
         has_bracket = bool(re.search(r'[(（].*?[)）]', clean_name))
-        if has_bracket and any(nation in clean_name for nation in NATIONS):
+        if has_bracket and any(nation in clean_name for nation in itemName.NATIONS):
             item_type = lm.t("parser.type_vehicle")
 
     # 4.Price and Quantity
@@ -71,7 +76,14 @@ def parse_message_node(msg_node, lm=None):
         # Extract price part and filter out non-numeric characters
         # 価格部分を抽出し、非数字をフィルタリング
         # 取价格部分并过滤掉非数字
-        raw_p = re.sub(r'[^\d.]', '', price_el.inner_text().strip().split()[0])
+        price_text = price_el.inner_text().strip()
+        tokens = price_text.split()
+        # Pick first token that contains at least one digit after cleaning
+        for t in tokens:
+            cleaned = re.sub(r'[^\d.]', '', t)
+            if cleaned:
+                raw_p = cleaned
+                break
 
     count_el = msg_node.query_selector('.count span') or msg_node.query_selector('.count')
     raw_c = "1"

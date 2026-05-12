@@ -24,13 +24,18 @@ def run():
             # 1.Connect to Chrome.
             # 1.Chrome に接続。
             # 1.连接到 Chrome。
-            result = connect_browser(p)
-            if result is None:
-                print("Error: Trading history page not found! Please open it manually first.")
-                print("错误：未找到交易历史页面！请先手动打开交易通知页面。")
+            ok, data = connect_browser(p)
+            if not ok:
+                if data == "no_cdp":
+                    print("Error: Chrome not detected (port 9222).")
+                    print("错误：未检测到 Chrome（端口 9222），请先运行 start_chrome.bat。")
+                    print("Please run start_chrome.bat first to launch Chrome with remote debugging.")
+                else:
+                    print("Error: Trading history page not found! Please open it manually first.")
+                    print("错误：未找到交易历史页面！请先手动打开交易通知页面。")
                 return
 
-            browser, context, target_page = result
+            browser, context, target_page = data
 
             # 2.Confirm login.
             # 2.ログイン確認。

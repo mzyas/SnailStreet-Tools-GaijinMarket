@@ -395,12 +395,13 @@ class GaijinMarketGUI:
         try:
             self._log_poll("Connecting to Chrome...")
             with sync_playwright() as p:
-                result = connect_browser(p)
-                if result is None:
-                    self._result_queue.put(("error", self._tm("msg_no_chrome")))
+                ok, data = connect_browser(p)
+                if not ok:
+                    err_key = "msg_no_chrome" if data == "no_cdp" else "msg_no_page"
+                    self._result_queue.put(("error", self._tm(err_key)))
                     return
 
-                browser, context, target_page = result
+                browser, context, target_page = data
                 self._log_poll(f"Connected to: {target_page.title()}")
 
                 # Detect language

@@ -26,13 +26,14 @@ def connect_browser(playwright_instance):
     通过 CDP 连接到已运行的 Chrome，并定位交易历史页面。
 
     Returns:
-        tuple: (browser, context, target_page) on success.
-        None:  if page not found.
+        (True, (browser, context, target_page))  — success.
+        (False, "no_cdp")                        — Chrome not running / port 9222 closed.
+        (False, "no_page")                       — Chrome connected but no trading history page.
     """
     try:
         browser = playwright_instance.chromium.connect_over_cdp("http://localhost:9222")
     except Exception:
-        return None
+        return False, "no_cdp"
 
     context = browser.contexts[0]
     target_page = None
@@ -42,9 +43,9 @@ def connect_browser(playwright_instance):
             break
 
     if not target_page:
-        return None
+        return False, "no_page"
 
-    return browser, context, target_page
+    return True, (browser, context, target_page)
 
 
 def detect_language(target_page):

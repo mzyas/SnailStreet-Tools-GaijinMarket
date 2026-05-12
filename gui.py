@@ -13,7 +13,6 @@ from tkinter import ttk, messagebox
 import threading
 import queue
 import os
-import subprocess
 from datetime import datetime
 
 from playwright.sync_api import sync_playwright
@@ -27,6 +26,7 @@ from core import (
     format_tsv,
     copy_to_clipboard,
     get_default_date_range,
+    launch_chrome,
 )
 
 
@@ -353,18 +353,13 @@ class GaijinMarketGUI:
     # 启动 Chrome
     # ==================================================================
     def _on_launch_chrome(self):
-        """Launch start_chrome.bat in the project root."""
+        """Launch Chrome via core.launch_chrome()."""
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        bat_path = os.path.join(script_dir, "start_chrome.bat")
-        if not os.path.exists(bat_path):
-            messagebox.showerror(self._tm("msg_error"),
-                                 f"start_chrome.bat not found at:\n{bat_path}")
-            return
-        try:
-            subprocess.Popen(bat_path, cwd=script_dir, shell=True)
-            self._log("Launching Chrome...  /  Chrome を起動中...  /  正在启动 Chrome...")
-        except Exception as e:
-            messagebox.showerror(self._tm("msg_error"), str(e))
+        ok, msg = launch_chrome(script_dir)
+        if ok:
+            self._log(msg)
+        else:
+            messagebox.showerror(self._tm("msg_error"), msg)
 
     # ==================================================================
     # Language switch

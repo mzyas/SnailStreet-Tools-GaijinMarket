@@ -13,10 +13,21 @@ if _LM.lang == "zh_CN":
 else:
     NATIONS = ["USA", "USSR", "Germany", "Great Britain", "Japan", "China", "Italy", "France", "Sweden", "Israel"]
 
-# Absolute path of the current script.
-# 実行中スクリプトの絶対パス。
-# 当前脚本的绝对路径。
-base_dir = os.path.dirname(os.path.abspath(__file__))
+# Determine base directory:
+#   - PyInstaller bundle:  sys.executable のあるディレクトリ
+#     打包后: exe 所在目录
+#   - Normal Python:       __file__ のあるディレクトリ
+#     通常実行: 脚本所在目录
+import sys as _sys
+
+if getattr(_sys, 'frozen', False):
+    # Running as a PyInstaller bundle — Item_Name/ sits next to the .exe
+    # PyInstaller バンドル実行中 — Item_Name/ は .exe の隣
+    # 打包运行 — Item_Name/ 在 exe 旁边
+    base_dir = os.path.dirname(_sys.executable)
+else:
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+
 # CSV path for decoration items.
 # 装飾品アイテムの CSV パス。
 # 装饰品 CSV 路径。

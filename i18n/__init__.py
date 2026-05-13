@@ -1,5 +1,20 @@
 import json
 import os
+import sys as _sys
+
+
+def _get_i18n_dir():
+    """Return the directory containing i18n JSON files.
+    i18n JSON ファイルが含まれるディレクトリを返します。
+    返回包含 i18n JSON 文件的目录。
+
+    - PyInstaller bundle:  exe と同じフォルダの i18n/
+    - Normal Python:       __file__ のある i18n/
+    """
+    if getattr(_sys, 'frozen', False):
+        return os.path.join(os.path.dirname(_sys.executable), 'i18n')
+    else:
+        return os.path.dirname(os.path.abspath(__file__))
 
 
 class LanguageManager:
@@ -15,7 +30,7 @@ class LanguageManager:
         return cls._instances[lang]
 
     def _load(self):
-        path = os.path.join(os.path.dirname(__file__), f"{self.lang}.json")
+        path = os.path.join(_get_i18n_dir(), f"{self.lang}.json")
         if os.path.exists(path):
             with open(path, "r", encoding="utf-8") as f:
                 self._translations = json.load(f)

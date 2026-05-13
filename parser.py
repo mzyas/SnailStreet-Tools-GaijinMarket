@@ -1,16 +1,27 @@
 # parser.py
 import re
 from datetime import datetime
-from itemName import NATIONS, OTHER_ITEMS
+import itemName
+from i18n import LanguageManager
+
+_LM = LanguageManager("zh_CN")
+_LAST_LANG = _LM.lang  # Track language for dynamic reloading
 
 
-def parse_message_node(msg_node):
+def parse_message_node(msg_node, lm=None):
+    global _LAST_LANG
+    if lm is None:
+        lm = _LM
+    # Dynamically reload NATIONS / OTHER_ITEMS when language changes
+    if lm.lang != _LAST_LANG:
+        itemName.reload_lang(lm.lang)
+        _LAST_LANG = lm.lang
     # 1.Raw text fetching
     # 1.原文テキストの抽出
     # 1.基础文本获取
     full_text = msg_node.inner_text()
-    is_buy = "Purchase completed" in full_text # "购买完成"
-    is_sell = "Sale completed" in full_text # "销售完成"
+    is_buy = lm.t("parser.purchase_completed") in full_text
+    is_sell = lm.t("parser.sale_completed") in full_text
 
     if not is_buy and not is_sell:
         return None
@@ -45,16 +56,16 @@ def parse_message_node(msg_node):
     # 移除特殊字符进行类型匹配
     clean_name = re.sub('[^\u4e00-\u9fa5a-zA-Z0-9()（）]', '', original_name)
 
-    item_type = "Camouflage" # "涂装"
+    item_type = lm.t("parser.type_camouflage")
     # Check for "Other" type
     # 「その他」の判定
     # 判断是否为“其它”
-    if any(re.sub('[^\u4e00-\u9fa5a-zA-Z0-9]', '', item) in clean_name for item in OTHER_ITEMS):
-        item_type = "other" # "其它"
+    if any(re.sub('[^\u4e00-\u9fa5a-zA-Z0-9()（）]', '', item) in clean_name for item in itemName.OTHER_ITEMS):
+        item_type = lm.t("parser.type_other")
     else:
         has_bracket = bool(re.search(r'[(（].*?[)）]', clean_name))
-        if has_bracket and any(nation in clean_name for nation in NATIONS):
-            item_type = "Vehicle" # "载具"
+        if has_bracket and any(nation in clean_name for nation in itemName.NATIONS):
+            item_type = lm.t("parser.type_vehicle")
 
     # 4.Price and Quantity
     # 4.価格と数量
@@ -65,7 +76,14 @@ def parse_message_node(msg_node):
         # Extract price part and filter out non-numeric characters
         # 価格部分を抽出し、非数字をフィルタリング
         # 取价格部分并过滤掉非数字
-        raw_p = re.sub(r'[^\d.]', '', price_el.inner_text().strip().split()[0])
+        price_text = price_el.inner_text().strip()
+        tokens = price_text.split()
+        # Pick first token that contains at least one digit after cleaning
+        for t in tokens:
+            cleaned = re.sub(r'[^\d.]', '', t)
+            if cleaned:
+                raw_p = cleaned
+                break
 
     count_el = msg_node.query_selector('.count span') or msg_node.query_selector('.count')
     raw_c = "1"

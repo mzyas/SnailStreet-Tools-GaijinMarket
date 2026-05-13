@@ -390,8 +390,17 @@ class GaijinMarketGUI:
     # ==================================================================
     def _on_launch_chrome(self):
         """Launch Chrome via core.launch_chrome()."""
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        ok, msg = launch_chrome(script_dir)
+        # Determine project root:
+        #   - PyInstaller bundle: exe 所在目录
+        #     打包后: exe 所在目录
+        #   - Normal Python:      __file__ 所在目录
+        #     通常実行: __file__ 所在目录
+        import sys as _sys2
+        if getattr(_sys2, 'frozen', False):
+            project_root = os.path.dirname(os.path.abspath(_sys2.executable))
+        else:
+            project_root = os.path.dirname(os.path.abspath(__file__))
+        ok, msg = launch_chrome(project_root)
         if ok:
             self._log(msg)
         else:
